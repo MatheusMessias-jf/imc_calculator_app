@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:imc_calculator_app/pages/calculator.dart';
+import 'package:imc_calculator_app/pages/calculator_hive_page.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -12,7 +13,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
           primarySwatch: Colors.deepPurple,
           textTheme: GoogleFonts.robotoTextTheme()),
-      home: CalculatorPage(),
+      home: CalculatorHivePage(),
     );
   }
 }

@@ -1,18 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:imc_calculator_app/classes/imc.dart';
+import 'package:imc_calculator_app/model/imc_model.dart';
+import 'package:imc_calculator_app/repositories/imc_hive_repository.dart';
 import 'package:imc_calculator_app/repositories/imc_repository.dart';
 
-class CalculatorPage extends StatefulWidget {
-  const CalculatorPage({super.key});
+class CalculatorHivePage extends StatefulWidget {
+  const CalculatorHivePage({super.key});
 
   @override
-  State<CalculatorPage> createState() => _CalculatorPageState();
+  State<CalculatorHivePage> createState() => _CalculatorHivePageState();
 }
 
-class _CalculatorPageState extends State<CalculatorPage> {
-  var heightController = TextEditingController(text: "");
-  var weightController = TextEditingController(text: "");
-  var imcRepository = ImcRepository();
+class _CalculatorHivePageState extends State<CalculatorHivePage> {
+  //var imcRepository = ImcRepository(); alterado para hive
+  late IMCHiveRepository imcRepository;
+  late Box box;
+  List<IMCModel> _imcs = [];
+  var heightController = TextEditingController();
+  var weightController = TextEditingController();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    carregarDados();
+    //print(heightController.text);
+  }
+
+  void carregarDados() async {
+    imcRepository = await IMCHiveRepository.carregar();
+    _imcs = imcRepository.obterDados();
+    if (Hive.isBoxOpen('calcIMCData')) {
+      box = Hive.box('calcIMCData');
+    } else {
+      box = await Hive.openBox('calcIMCData');
+    }
+    heightController.text = box.get('height') ?? "";
+    weightController.text = box.get('weight') ?? "";
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,9 +72,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                       alignment: Alignment.center,
                       child: TextField(
                         controller: heightController,
-                        onChanged: (value) {
-                          debugPrint(value);
-                        },
+                        onChanged: (value) {},
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                             contentPadding: const EdgeInsets.all(13),
@@ -73,9 +99,7 @@ class _CalculatorPageState extends State<CalculatorPage> {
                       alignment: Alignment.center,
                       child: TextField(
                         controller: weightController,
-                        onChanged: (value) {
-                          debugPrint(value);
-                        },
+                        onChanged: (value) {},
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                             contentPadding: const EdgeInsets.all(13),
@@ -110,9 +134,13 @@ class _CalculatorPageState extends State<CalculatorPage> {
                                           "Insira corretamente seus dados")));
                             } else {
                               setState(() {
-                                imcRepository.addImc(Imc(
+                                print(box.get('height'));
+                                box.put('height', heightController.text);
+                                box.put('weight', weightController.text);
+                                imcRepository.salvar(IMCModel.criar(
                                     double.parse(heightController.text),
                                     double.parse(weightController.text)));
+                                _imcs = imcRepository.obterDados();
                               });
                             }
                           },
@@ -139,14 +167,14 @@ class _CalculatorPageState extends State<CalculatorPage> {
                       children: [
                         Expanded(
                           child: ListView.builder(
-                              itemCount: imcRepository.imcs.length,
+                              itemCount: _imcs.length,
                               itemBuilder: (BuildContext bc, int index) {
-                                var imc = imcRepository.imcs[index];
+                                var imc = _imcs[index];
                                 return Card(
                                   child: Dismissible(
                                     onDismissed:
                                         (DismissDirection dismissDirection) {
-                                      imcRepository.imcs.remove(imc);
+                                      imcRepository.excluir(imc);
                                     },
                                     key: Key(imc.id),
                                     child: ListTile(

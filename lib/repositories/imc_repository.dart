@@ -1,3 +1,5 @@
+import 'package:hive/hive.dart';
+
 import '../classes/imc.dart';
 
 class ImcRepository {
